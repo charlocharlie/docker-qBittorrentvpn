@@ -138,6 +138,9 @@ fi
 # split comma seperated string into list from NAME_SERVERS env variable
 IFS=',' read -ra name_server_list <<< "${NAME_SERVERS}"
 
+# export name_server_list so it can be used in other scripts and we don't waste cpu cycles on another readline call
+export name_server_list
+
 # process name servers in the list
 for name_server_item in "${name_server_list[@]}"; do
 
