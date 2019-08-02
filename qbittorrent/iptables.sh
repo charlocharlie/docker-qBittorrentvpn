@@ -113,18 +113,6 @@ if [ -z "${INCOMING_PORT}" ]; then
 else
 	iptables -A INPUT -i eth0 -s "${LAN_NETWORK}" -p tcp --dport ${INCOMING_PORT} -j ACCEPT
 fi
-	
-# accept return input from NAME_SERVERS to OS and applications. This allows OpenVPN to resolve the
-# remote server hostname correctly on connection failure and reconnect. We know name_server_list
-# exists from start.sh
-for name_server_item in "${name_server_list[@]}"; do
-
-	# strip whitespace from start and end of lan_network_item
-	name_server_item=$(echo "${name_server_item}" | sed -e 's~^[ \t]*~~;s~[ \t]*$~~')
-
-	iptables -A INPUT -i eth0 -s ${name_server_item} -p udp --sport 53 -j ACCEPT
-
-done
 
 # accept input icmp (ping)
 iptables -A INPUT -p icmp --icmp-type echo-reply -j ACCEPT
@@ -181,15 +169,18 @@ else
 	iptables -A OUTPUT -o eth0 -d "${LAN_NETWORK}" -p tcp --sport ${INCOMING_PORT} -j ACCEPT
 fi
 
-# accept ouput to NAME_SERVERS for OS and applications. This allows OpenVPN to resolve the remote
-# server hostname correctly on connection failure and reconnect. We know name_server_list exists
-# from start.sh
+# split comma seperated string into list from NAME_SERVERS env variable
+IFS=',' read -ra name_server_list <<< "${NAME_SERVERS}"
+
+# accept bidirectional traffic to NAME_SERVERS for OS and applications. This allows OpenVPN to resolve the
+# remote server hostname correctly on connection failure and reconnect. Recreated name_server_list from start.sh
 for name_server_item in "${name_server_list[@]}"; do
 
 	# strip whitespace from start and end of lan_network_item
 	name_server_item=$(echo "${name_server_item}" | sed -e 's~^[ \t]*~~;s~[ \t]*$~~')
 
-	iptables -A OUTPUT -i eth0 -d ${name_server_item} -p udp --dport 53 -j ACCEPT
+	iptables -A INPUT -i eth0 -s ${name_server_item}/32 -p udp --sport 53 -j ACCEPT
+	iptables -A OUTPUT -o eth0 -d ${name_server_item}/32 -p udp --dport 53 -j ACCEPT
 
 done
 
