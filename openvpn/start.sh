@@ -141,6 +141,14 @@ IFS=',' read -ra name_server_list <<< "${NAME_SERVERS}"
 # export name_server_list so it can be used in other scripts and we don't waste cpu cycles on another readline call
 export name_server_list
 
+# Default to override of the existing resolve conf. Docker-compose adds an internal resolver at the top of the file
+# when a bridge driver network is created. It's run on loopback 127.0.0.11 and used to resolve the other containers
+# in that docker-compose network. Non-local queries are forwarded to the host upstream resolver. OpenVPN doesn't handle
+# the fail over to secondary and tertiary DNS well on ping reset so it will cause repeated failures if the nameserver
+# 127.0.0.11 isn't removed.
+# See automatic DNS resolution here: https://docs.docker.com/network/bridge/
+cat /dev/null > /etc/resolve.conf
+
 # process name servers in the list
 for name_server_item in "${name_server_list[@]}"; do
 
