@@ -147,7 +147,7 @@ export name_server_list
 # the fail over to secondary and tertiary DNS well on ping reset so it will cause repeated failures if the nameserver
 # 127.0.0.11 isn't removed.
 # See automatic DNS resolution here: https://docs.docker.com/network/bridge/
-cat /dev/null > /etc/resolve.conf
+cat /dev/null > /etc/resolv.conf
 
 # process name servers in the list
 for name_server_item in "${name_server_list[@]}"; do
