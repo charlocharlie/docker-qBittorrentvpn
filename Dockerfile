@@ -19,6 +19,8 @@ RUN apt-get update \
     && add-apt-repository ppa:qbittorrent-team/qbittorrent-stable \
     && apt-get update \
     && apt-get install -y qbittorrent-nox openvpn curl moreutils net-tools dos2unix kmod iptables ipcalc unrar \
+    # Added some diagnostic tools for testing OpenVPN dns issues
+    && apt-get install -y tcpdump dnsutils \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Add configuration and scripts
