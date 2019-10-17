@@ -179,8 +179,10 @@ for name_server_item in "${name_server_list[@]}"; do
 	# strip whitespace from start and end of lan_network_item
 	name_server_item=$(echo "${name_server_item}" | sed -e 's~^[ \t]*~~;s~[ \t]*$~~')
 
-	iptables -A INPUT -i eth0 -s ${name_server_item}/32 -p udp --sport 53 -j ACCEPT
-	iptables -A OUTPUT -o eth0 -d ${name_server_item}/32 -p udp --dport 53 -j ACCEPT
+	# Insert rules into iptables for allowing DNS. Relaxed interface requirement as OpenVPN appears
+	# to hold the default route in docker when it's trying to reconnect. It attempts DNS in a weird way.
+	iptables -A INPUT -s ${name_server_item}/32 -p udp --sport 53 -j ACCEPT
+	iptables -A OUTPUT -d ${name_server_item}/32 -p udp --dport 53 -j ACCEPT
 
 done
 
