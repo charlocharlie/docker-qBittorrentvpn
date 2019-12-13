@@ -121,8 +121,8 @@ if [[ $VPN_ENABLED == "yes" ]]; then
 	if [[ ! -z "${NAME_SERVERS}" ]]; then
 		echo "[info] NAME_SERVERS defined as '${NAME_SERVERS}'" | ts '%Y-%m-%d %H:%M:%.S'
 	else
-		echo "[warn] NAME_SERVERS not defined (via -e NAME_SERVERS), defaulting to Google and FreeDNS name servers" | ts '%Y-%m-%d %H:%M:%.S'
-		export NAME_SERVERS="8.8.8.8,37.235.1.174,8.8.4.4,37.235.1.177"
+		echo "[warn] NAME_SERVERS not defined (via -e NAME_SERVERS), defaulting to CloudFlare and Quad9" | ts '%Y-%m-%d %H:%M:%.S'
+		export NAME_SERVERS="1.1.1.1,9.9.9.9,1.0.0.1,149.112.112.112"
 	fi
 	export VPN_OPTIONS=$(echo "${VPN_OPTIONS}" | sed -e 's~^[ \t]*~~;s~[ \t]*$~~')
 	if [[ ! -z "${VPN_OPTIONS}" ]]; then
@@ -140,6 +140,14 @@ IFS=',' read -ra name_server_list <<< "${NAME_SERVERS}"
 
 # export name_server_list so it can be used in other scripts and we don't waste cpu cycles on another readline call
 export name_server_list
+
+# Default to override of the existing resolve conf. Docker-compose adds an internal resolver at the top of the file
+# when a bridge driver network is created. It's run on loopback 127.0.0.11 and used to resolve the other containers
+# in that docker-compose network. Non-local queries are forwarded to the host upstream resolver. OpenVPN doesn't handle
+# the fail over to secondary and tertiary DNS well on ping reset so it will cause repeated failures if the nameserver
+# 127.0.0.11 isn't removed.
+# See automatic DNS resolution here: https://docs.docker.com/network/bridge/
+cat /dev/null > /etc/resolv.conf
 
 # process name servers in the list
 for name_server_item in "${name_server_list[@]}"; do
